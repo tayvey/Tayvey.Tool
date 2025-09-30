@@ -3,30 +3,49 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.0.11018.127
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tayvey.Tool.DependencyInjection", "Tayvey.Tool.DependencyInjection\Tayvey.Tool.DependencyInjection.csproj", "{493DBDCA-99AB-406C-B59C-978295E4D1C6}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{0164AB26-91C2-4BC3-8983-5E1C70348EB0}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
-		Directory.Build.props = Directory.Build.props
 		README.md = README.md
 		LICENSE = LICENSE
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tayvey.Tool.DependencyInjection", "src\Tayvey.Tool.DependencyInjection\Tayvey.Tool.DependencyInjection.csproj", "{C2202826-7B10-48F0-A7DB-5F7896855011}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{493DBDCA-99AB-406C-B59C-978295E4D1C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{493DBDCA-99AB-406C-B59C-978295E4D1C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{493DBDCA-99AB-406C-B59C-978295E4D1C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{493DBDCA-99AB-406C-B59C-978295E4D1C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Debug|x64.Build.0 = Debug|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Debug|x86.Build.0 = Debug|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Release|x64.ActiveCfg = Release|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Release|x64.Build.0 = Release|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Release|x86.ActiveCfg = Release|Any CPU
+		{C2202826-7B10-48F0-A7DB-5F7896855011}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C2202826-7B10-48F0-A7DB-5F7896855011} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD4B0AB9-8A13-4EC8-B6AF-6D643602CD99}
