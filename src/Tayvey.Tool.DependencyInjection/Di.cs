@@ -21,7 +21,7 @@ public class Di
     /// <summary>
     /// 依赖注入服务列表
     /// </summary>
-    internal List<DiService> Services { get; }
+    internal List<DiService> Services { get; set; }
 
     /// <summary>
     /// 创建依赖注入构建器

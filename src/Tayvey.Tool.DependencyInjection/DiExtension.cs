@@ -50,14 +50,14 @@ public static class DiExtension
                 continue;
             }
 
-            interfaces = [.. interfaces.Where(i => attribute.Interfaces.Contains(i))];
-            if (interfaces.Count == 0)
+            List<Type> explicitInterfaces = [.. interfaces.Where(i => attribute.Interfaces.Contains(i))];
+            if (explicitInterfaces.Count == 0)
             {
                 service.AddInterface(interfaces[0], type, attribute);
                 continue;
             }
 
-            foreach (Type interfaceType in interfaces)
+            foreach (Type interfaceType in explicitInterfaces)
             {
                 service.AddInterface(interfaceType, type, attribute);
             }

@@ -8,7 +8,7 @@ namespace TayveyTool;
 /// <summary>
 /// 依赖注入构建器
 /// </summary>
-public class DiBuilder : IDiLifetimeBuilder
+internal class DiBuilder : IDiBuilder
 {
     /// <summary>
     /// 依赖注入
@@ -29,7 +29,7 @@ public class DiBuilder : IDiLifetimeBuilder
     /// 所有类
     /// </summary>
     /// <returns></returns>
-    public IDiLifetimeBuilder UseSelf()
+    public IDiBuilder UseSelf()
     {
         foreach (DiService service in _di.Services)
         {
@@ -45,14 +45,11 @@ public class DiBuilder : IDiLifetimeBuilder
     /// </summary>
     /// <param name="predicate"></param>
     /// <returns></returns>
-    public IDiLifetimeBuilder UseSelf(Func<Type, bool> predicate)
+    public IDiBuilder UseSelf(Func<Type, bool> predicate)
     {
-        foreach (DiService service in _di.Services)
+        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
         {
-            if (predicate(service.ServiceType))
-            {
-                service.Self = true;
-            }
+            service.Self = true;
         }
 
         return this;
@@ -63,7 +60,7 @@ public class DiBuilder : IDiLifetimeBuilder
     /// 所有类
     /// </summary>
     /// <returns></returns>
-    public IDiLifetimeBuilder UseScoped()
+    public IDiBuilder UseScoped()
     {
         foreach (DiService service in _di.Services)
         {
@@ -79,14 +76,11 @@ public class DiBuilder : IDiLifetimeBuilder
     /// </summary>
     /// <param name="predicate"></param>
     /// <returns></returns>
-    public IDiLifetimeBuilder UseScoped(Func<Type, bool> predicate)
+    public IDiBuilder UseScoped(Func<Type, bool> predicate)
     {
-        foreach (DiService service in _di.Services)
+        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
         {
-            if (predicate(service.ServiceType))
-            {
-                service.Lifetimes.Add(LifetimeEnum.Scoped);
-            }
+            service.Lifetimes.Add(LifetimeEnum.Scoped);
         }
 
         return this;
@@ -97,7 +91,7 @@ public class DiBuilder : IDiLifetimeBuilder
     /// 所有类
     /// </summary>
     /// <returns></returns>
-    public IDiLifetimeBuilder UseTransient()
+    public IDiBuilder UseTransient()
     {
         foreach (DiService service in _di.Services)
         {
@@ -113,14 +107,11 @@ public class DiBuilder : IDiLifetimeBuilder
     /// </summary>
     /// <param name="predicate"></param>
     /// <returns></returns>
-    public IDiLifetimeBuilder UseTransient(Func<Type, bool> predicate)
+    public IDiBuilder UseTransient(Func<Type, bool> predicate)
     {
-        foreach (DiService service in _di.Services)
+        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
         {
-            if (predicate(service.ServiceType))
-            {
-                service.Lifetimes.Add(LifetimeEnum.Transient);
-            }
+            service.Lifetimes.Add(LifetimeEnum.Transient);
         }
 
         return this;
@@ -131,7 +122,7 @@ public class DiBuilder : IDiLifetimeBuilder
     /// 所有类
     /// </summary>
     /// <returns></returns>
-    public IDiLifetimeBuilder UseSingleton()
+    public IDiBuilder UseSingleton()
     {
         foreach (DiService service in _di.Services)
         {
@@ -147,14 +138,11 @@ public class DiBuilder : IDiLifetimeBuilder
     /// </summary>
     /// <param name="predicate"></param>
     /// <returns></returns>
-    public IDiLifetimeBuilder UseSingleton(Func<Type, bool> predicate)
+    public IDiBuilder UseSingleton(Func<Type, bool> predicate)
     {
-        foreach (DiService service in _di.Services)
+        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
         {
-            if (predicate(service.ServiceType))
-            {
-                service.Lifetimes.Add(LifetimeEnum.Singleton);
-            }
+            service.Lifetimes.Add(LifetimeEnum.Singleton);
         }
 
         return this;
@@ -167,16 +155,13 @@ public class DiBuilder : IDiLifetimeBuilder
     /// <param name="predicate"></param>
     /// <param name="types"></param>
     /// <returns></returns>
-    public IDiLifetimeBuilder UseInterfaces(Func<Type, bool> predicate, params Type[] types)
+    public IDiBuilder UseInterfaces(Func<Type, bool> predicate, params Type[] types)
     {
         List<Type> typeList = types.ToList();
 
-        foreach (DiService service in _di.Services)
+        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
         {
-            if (predicate(service.ServiceType))
-            {
-                service.Interfaces.AddRange(typeList);
-            }
+            service.Interfaces.AddRange(typeList);
         }
 
         return this;
@@ -218,18 +203,29 @@ public class DiBuilder : IDiLifetimeBuilder
                 continue;
             }
 
-            interfaces = [.. interfaces.Where(i => diService.Interfaces.Contains(i))];
-            if (interfaces.Count == 0)
+            List<Type> explicitInterfaces = [.. interfaces.Where(i => diService.Interfaces.Contains(i))];
+            if (explicitInterfaces.Count == 0)
             {
                 AddInterface(service, interfaces[0], diService.ServiceType, diService.Lifetimes[0]);
                 continue;
             }
 
-            foreach (Type interfaceType in interfaces)
+            foreach (Type interfaceType in explicitInterfaces)
             {
                 AddInterface(service, interfaceType, diService.ServiceType, diService.Lifetimes[0]);
             }
         }
+    }
+
+    /// <summary>
+    /// 筛选类
+    /// </summary>
+    /// <param name="predicate"></param>
+    /// <returns></returns>
+    public IDiBuilder Where(Func<Type, bool> predicate)
+    {
+        _di.Services = _di.Services.Where(s => predicate(s.ServiceType)).ToList();
+        return this;
     }
 
     /// <summary>

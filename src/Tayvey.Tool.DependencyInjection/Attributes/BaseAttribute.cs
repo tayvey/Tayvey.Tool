@@ -9,7 +9,7 @@ public abstract class BaseAttribute(params Type[] interfaces) : Attribute
     /// <summary>
     /// 强制不使用接口注册
     /// </summary>
-    public bool Self { get; set; } = false;
+    public bool Self { get; set; }
 
     /// <summary>
     /// 注册接口列表
