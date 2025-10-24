@@ -13,9 +13,9 @@ public class Di
     /// 构造
     /// </summary>
     /// <param name="services"></param>
-    internal Di(IEnumerable<DiService> services)
+    internal Di(List<DiService> services)
     {
-        Services = [.. services];
+        Services = services;
     }
 
     /// <summary>
@@ -30,13 +30,14 @@ public class Di
     /// <returns></returns>
     public static IDiBuilder Create()
     {
-        IEnumerable<DiService> services = AppDomain
+        List<DiService> services = AppDomain
             .CurrentDomain
             .GetAssemblies()
             .SelectMany(a => a
                 .GetTypes()
                 .Where(t => t is { IsClass: true, IsAbstract: false })
-                .Select(t => new DiService(t)));
+                .Select(t => new DiService(t)))
+            .ToList();
 
         return new DiBuilder(services);
     }
@@ -49,11 +50,12 @@ public class Di
     /// <returns></returns>
     public static IDiBuilder Create<T>()
     {
-        IEnumerable<DiService> services = typeof(T)
+        List<DiService> services = typeof(T)
             .Assembly
             .GetTypes()
             .Where(t => t is { IsClass: true, IsAbstract: false })
-            .Select(t => new DiService(t));
+            .Select(t => new DiService(t))
+            .ToList();
 
         return new DiBuilder(services);
     }
@@ -66,12 +68,13 @@ public class Di
     /// <returns></returns>
     public static IDiBuilder Create(params Type[] types)
     {
-        IEnumerable<DiService> services = types
+        List<DiService> services = types
             .SelectMany(t => t
                 .Assembly
                 .GetTypes()
                 .Where(at => at is { IsClass: true, IsAbstract: false })
-                .Select(at => new DiService(at)));
+                .Select(at => new DiService(at)))
+            .ToList();
 
         return new DiBuilder(services);
     }
@@ -84,11 +87,12 @@ public class Di
     /// <returns></returns>
     public static IDiBuilder Create(params Assembly[] assemblies)
     {
-        IEnumerable<DiService> services = assemblies
+        List<DiService> services = assemblies
             .SelectMany(a => a
                 .GetTypes()
                 .Where(t => t is { IsClass: true, IsAbstract: false })
-                .Select(t => new DiService(t)));
+                .Select(t => new DiService(t)))
+            .ToList();
 
         return new DiBuilder(services);
     }

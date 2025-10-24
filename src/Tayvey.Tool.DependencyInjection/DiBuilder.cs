@@ -19,7 +19,7 @@ internal class DiBuilder : IDiBuilder
     /// 构造
     /// </summary>
     /// <param name="services"></param>
-    internal DiBuilder(IEnumerable<DiService> services)
+    internal DiBuilder(List<DiService> services)
     {
         _di = new(services);
     }
