@@ -39,8 +39,9 @@ public static class DiExtension
 
             List<Type> interfaces = [.. type.GetInterfaces()];
             List<Type> baseInterfaces = [.. type.BaseType?.GetInterfaces() ?? []];
-            interfaces = interfaces.Except(baseInterfaces).ToList();
-            if (interfaces.Count == 0)
+            List<Type> selfInterfaces = interfaces.Except(baseInterfaces).ToList();
+
+            if (selfInterfaces.Count == 0)
             {
                 service.AddSelf(type, attribute);
                 continue;
@@ -48,18 +49,18 @@ public static class DiExtension
 
             if (attribute.Interfaces.Length == 0)
             {
-                service.AddInterface(interfaces[0], type, attribute);
+                service.AddInterface(selfInterfaces[0], type, attribute);
                 continue;
             }
 
-            List<Type> explicitInterfaces = [.. interfaces.Where(i => attribute.Interfaces.Contains(i))];
-            if (explicitInterfaces.Count == 0)
+            List<Type> effectiveInterfaces = [.. selfInterfaces.Where(i => attribute.Interfaces.Contains(i))];
+            if (effectiveInterfaces.Count == 0)
             {
-                service.AddInterface(interfaces[0], type, attribute);
+                service.AddInterface(selfInterfaces[0], type, attribute);
                 continue;
             }
 
-            foreach (Type interfaceType in explicitInterfaces)
+            foreach (Type interfaceType in effectiveInterfaces)
             {
                 service.AddInterface(interfaceType, type, attribute);
             }

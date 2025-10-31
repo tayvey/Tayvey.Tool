@@ -192,8 +192,9 @@ internal class DiBuilder : IDiBuilder
 
             List<Type> interfaces = [.. diService.ServiceType.GetInterfaces()];
             List<Type> baseInterfaces = [.. diService.ServiceType.BaseType?.GetInterfaces() ?? []];
-            interfaces = interfaces.Except(baseInterfaces).ToList();
-            if (interfaces.Count == 0)
+            List<Type> selfInterfaces = interfaces.Except(baseInterfaces).ToList();
+
+            if (selfInterfaces.Count == 0)
             {
                 AddSelf(service, diService.ServiceType, diService.Lifetimes[0]);
                 continue;
@@ -201,18 +202,18 @@ internal class DiBuilder : IDiBuilder
 
             if (diService.Interfaces.Count == 0)
             {
-                AddInterface(service, interfaces[0], diService.ServiceType, diService.Lifetimes[0]);
+                AddInterface(service, selfInterfaces[0], diService.ServiceType, diService.Lifetimes[0]);
                 continue;
             }
 
-            List<Type> explicitInterfaces = [.. interfaces.Where(i => diService.Interfaces.Contains(i))];
-            if (explicitInterfaces.Count == 0)
+            List<Type> effectiveInterfaces = [.. selfInterfaces.Where(i => diService.Interfaces.Contains(i))];
+            if (effectiveInterfaces.Count == 0)
             {
-                AddInterface(service, interfaces[0], diService.ServiceType, diService.Lifetimes[0]);
+                AddInterface(service, selfInterfaces[0], diService.ServiceType, diService.Lifetimes[0]);
                 continue;
             }
 
-            foreach (Type interfaceType in explicitInterfaces)
+            foreach (Type interfaceType in effectiveInterfaces)
             {
                 AddInterface(service, interfaceType, diService.ServiceType, diService.Lifetimes[0]);
             }
