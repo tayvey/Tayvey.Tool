@@ -38,6 +38,8 @@ public static class DiExtension
             }
 
             List<Type> interfaces = [.. type.GetInterfaces()];
+            List<Type> baseInterfaces = [.. type.BaseType?.GetInterfaces() ?? []];
+            interfaces = interfaces.Except(baseInterfaces).ToList();
             if (interfaces.Count == 0)
             {
                 service.AddSelf(type, attribute);

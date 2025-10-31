@@ -191,6 +191,8 @@ internal class DiBuilder : IDiBuilder
             }
 
             List<Type> interfaces = [.. diService.ServiceType.GetInterfaces()];
+            List<Type> baseInterfaces = [.. diService.ServiceType.BaseType?.GetInterfaces() ?? []];
+            interfaces = interfaces.Except(baseInterfaces).ToList();
             if (interfaces.Count == 0)
             {
                 AddSelf(service, diService.ServiceType, diService.Lifetimes[0]);
