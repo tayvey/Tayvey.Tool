@@ -1,192 +1,108 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using TayveyTool.Enums;
 using TayveyTool.Interfaces;
 using TayveyTool.Models;
-using static TayveyTool.Models.DiService;
 
 namespace TayveyTool;
 
 /// <summary>
 /// 依赖注入构建器
 /// </summary>
-internal class DiBuilder : IDiBuilder
+internal class DiBuilder : IDiBuilder, IDiBuilderMode, IDiBuilderLifeCycle
 {
     /// <summary>
-    /// 依赖注入
+    /// 服务容器
     /// </summary>
-    private readonly Di _di;
+    private readonly IServiceCollection _services;
+
+    /// <summary>
+    /// 依赖注入服务集合
+    /// </summary>
+    private List<DiService>? _diServices;
+
+    /// <summary>
+    /// 依赖注入服务类型集合
+    /// </summary>
+    private IEnumerable<Type> _types;
 
     /// <summary>
     /// 构造
     /// </summary>
     /// <param name="services"></param>
-    internal DiBuilder(List<DiService> services)
-    {
-        _di = new(services);
-    }
-
-    /// <summary>
-    /// 强制不使用接口注册
-    /// 所有类
-    /// </summary>
-    /// <returns></returns>
-    public IDiBuilder UseSelf()
-    {
-        foreach (DiService service in _di.Services)
-        {
-            service.Self = true;
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    /// 强制不使用接口注册
-    /// 指定类
-    /// </summary>
-    /// <param name="predicate"></param>
-    /// <returns></returns>
-    public IDiBuilder UseSelf(Func<Type, bool> predicate)
-    {
-        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
-        {
-            service.Self = true;
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    /// 使用作用域生命周期
-    /// 所有类
-    /// </summary>
-    /// <returns></returns>
-    public IDiBuilder UseScoped()
-    {
-        foreach (DiService service in _di.Services)
-        {
-            service.Lifetimes.Add(LifetimeEnum.Scoped);
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    /// 使用作用域生命周期
-    /// 指定类
-    /// </summary>
-    /// <param name="predicate"></param>
-    /// <returns></returns>
-    public IDiBuilder UseScoped(Func<Type, bool> predicate)
-    {
-        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
-        {
-            service.Lifetimes.Add(LifetimeEnum.Scoped);
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    /// 使用瞬时生命周期
-    /// 所有类
-    /// </summary>
-    /// <returns></returns>
-    public IDiBuilder UseTransient()
-    {
-        foreach (DiService service in _di.Services)
-        {
-            service.Lifetimes.Add(LifetimeEnum.Transient);
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    /// 使用瞬时生命周期
-    /// 指定类
-    /// </summary>
-    /// <param name="predicate"></param>
-    /// <returns></returns>
-    public IDiBuilder UseTransient(Func<Type, bool> predicate)
-    {
-        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
-        {
-            service.Lifetimes.Add(LifetimeEnum.Transient);
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    /// 使用单例生命周期
-    /// 所有类
-    /// </summary>
-    /// <returns></returns>
-    public IDiBuilder UseSingleton()
-    {
-        foreach (DiService service in _di.Services)
-        {
-            service.Lifetimes.Add(LifetimeEnum.Singleton);
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    /// 使用单例生命周期
-    /// 指定类
-    /// </summary>
-    /// <param name="predicate"></param>
-    /// <returns></returns>
-    public IDiBuilder UseSingleton(Func<Type, bool> predicate)
-    {
-        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
-        {
-            service.Lifetimes.Add(LifetimeEnum.Singleton);
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    /// 使用接口注册
-    /// 指定类
-    /// </summary>
-    /// <param name="predicate"></param>
     /// <param name="types"></param>
-    /// <returns></returns>
-    public IDiBuilder UseInterfaces(Func<Type, bool> predicate, params Type[] types)
+    internal DiBuilder(
+        IServiceCollection services,
+        IEnumerable<Type> types
+    )
     {
-        List<Type> typeList = types.ToList();
+        _services = services;
+        _types = types;
+    }
 
-        foreach (DiService service in _di.Services.Where(service => predicate(service.ServiceType)))
-        {
-            service.Interfaces.AddRange(typeList);
-        }
-
+    /// <summary>
+    /// 筛选依赖注入服务类型集合
+    /// </summary>
+    /// <param name="predicate">筛选条件</param>
+    /// <returns></returns>
+    public IDiBuilder Where(Func<Type, bool> predicate)
+    {
+        _types = _types.Where(predicate);
         return this;
     }
 
     /// <summary>
-    /// 构建依赖注入
+    /// 瞬时
     /// </summary>
-    /// <param name="service"></param>
-    /// <exception cref="Exception"></exception>
-    public void Build(IServiceCollection service)
+    /// <param name="predicate">筛选条件</param>
+    /// <returns></returns>
+    public IDiBuilderLifeCycle Transient(Func<Type, bool>? predicate = null)
     {
-        foreach (DiService diService in _di.Services)
+        List<DiService> diServices = ToDiServices();
+        ForEach(diServices, predicate, service => { service.LifeCycle ??= DiLifeCycle.Transient; });
+        return this;
+    }
+
+    /// <summary>
+    /// 作用域
+    /// </summary>
+    /// <param name="predicate">筛选条件</param>
+    /// <returns></returns>
+    public IDiBuilderLifeCycle Scoped(Func<Type, bool>? predicate = null)
+    {
+        List<DiService> diServices = ToDiServices();
+        ForEach(diServices, predicate, service => { service.LifeCycle ??= DiLifeCycle.Scoped; });
+        return this;
+    }
+
+    /// <summary>
+    /// 单例
+    /// </summary>
+    /// <param name="predicate">筛选条件</param>
+    /// <returns></returns>
+    public IDiBuilderLifeCycle Singleton(Func<Type, bool>? predicate = null)
+    {
+        List<DiService> diServices = ToDiServices();
+        ForEach(diServices, predicate, service => { service.LifeCycle ??= DiLifeCycle.Singleton; });
+        return this;
+    }
+
+    /// <summary>
+    /// 构建
+    /// </summary>
+    public void Build()
+    {
+        List<DiService> diServices = ToDiServices();
+
+        foreach (DiService diService in diServices)
         {
-            switch (diService.Lifetimes.Count)
+            if (diService.RegisterMode == null || diService.LifeCycle == null)
             {
-                case 0:
-                    continue;
-                case > 1:
-                    throw new($"依赖注入类 {diService.ServiceType.FullName} 失败. 不明确的生命周期");
+                continue;
             }
 
-            if (diService.Self)
+            if (diService.RegisterMode == DiRegisterMode.Self)
             {
-                AddSelf(service, diService.ServiceType, diService.Lifetimes[0]);
+                AddService(diService.ServiceType, diService.LifeCycle);
                 continue;
             }
 
@@ -196,72 +112,113 @@ internal class DiBuilder : IDiBuilder
 
             if (selfInterfaces.Count == 0)
             {
-                AddSelf(service, diService.ServiceType, diService.Lifetimes[0]);
                 continue;
             }
 
-            if (diService.Interfaces.Count == 0)
+            if (diService.RegisterMode == DiRegisterMode.First)
             {
-                AddInterface(service, selfInterfaces[0], diService.ServiceType, diService.Lifetimes[0]);
+                AddService(diService.ServiceType, diService.LifeCycle, selfInterfaces[0]);
                 continue;
             }
 
-            List<Type> effectiveInterfaces = [.. selfInterfaces.Where(i => diService.Interfaces.Contains(i))];
-            if (effectiveInterfaces.Count == 0)
+            foreach (Type interfaceType in selfInterfaces)
             {
-                AddInterface(service, selfInterfaces[0], diService.ServiceType, diService.Lifetimes[0]);
-                continue;
-            }
-
-            foreach (Type interfaceType in effectiveInterfaces)
-            {
-                AddInterface(service, interfaceType, diService.ServiceType, diService.Lifetimes[0]);
+                AddService(diService.ServiceType, diService.LifeCycle, interfaceType);
             }
         }
     }
 
     /// <summary>
-    /// 筛选类
+    /// 不使用接口
     /// </summary>
-    /// <param name="predicate"></param>
+    /// <param name="predicate">筛选条件</param>
     /// <returns></returns>
-    public IDiBuilder Where(Func<Type, bool> predicate)
+    public IDiBuilderMode SelfMode(Func<Type, bool>? predicate = null)
     {
-        _di.Services = _di.Services.Where(s => predicate(s.ServiceType)).ToList();
+        List<DiService> diServices = ToDiServices();
+        ForEach(diServices, predicate, service => { service.RegisterMode ??= DiRegisterMode.Self; });
         return this;
     }
 
     /// <summary>
-    /// 不使用接口注册
+    /// 使用第一个接口
     /// </summary>
-    /// <param name="service"></param>
-    /// <param name="type"></param>
-    /// <param name="lifetime"></param>
-    private static void AddSelf(IServiceCollection service, Type type, LifetimeEnum lifetime)
+    /// <param name="predicate">筛选条件</param>
+    /// <returns></returns>
+    public IDiBuilderMode FirstMode(Func<Type, bool>? predicate = null)
     {
-        _ = lifetime switch
-        {
-            LifetimeEnum.Scoped => service.AddScoped(type),
-            LifetimeEnum.Transient => service.AddTransient(type),
-            _ => service.AddSingleton(type)
-        };
+        List<DiService> diServices = ToDiServices();
+        ForEach(diServices, predicate, service => { service.RegisterMode ??= DiRegisterMode.First; });
+        return this;
     }
 
     /// <summary>
-    /// 使用接口注册
+    /// 使用所有接口
     /// </summary>
-    /// <param name="service"></param>
-    /// <param name="interfaceType"></param>
-    /// <param name="type"></param>
-    /// <param name="lifetime"></param>
-    private static void AddInterface(IServiceCollection service, Type interfaceType, Type type,
-        LifetimeEnum lifetime)
+    /// <param name="predicate">筛选条件</param>
+    /// <returns></returns>
+    public IDiBuilderMode AllMode(Func<Type, bool>? predicate = null)
     {
-        _ = lifetime switch
+        List<DiService> diServices = ToDiServices();
+        ForEach(diServices, predicate, service => { service.RegisterMode ??= DiRegisterMode.All; });
+        return this;
+    }
+
+    /// <summary>
+    /// 转换为依赖注入服务集合
+    /// </summary>
+    private List<DiService> ToDiServices()
+    {
+        if (_diServices != null)
         {
-            LifetimeEnum.Scoped => service.AddScoped(interfaceType, type),
-            LifetimeEnum.Transient => service.AddTransient(interfaceType, type),
-            _ => service.AddSingleton(interfaceType, type)
+            return _diServices;
+        }
+
+        _diServices = _types
+            .Select(t => new DiService(t))
+            .ToList();
+
+        return _diServices;
+    }
+
+    /// <summary>
+    /// 遍历依赖注入服务集合
+    /// </summary>
+    /// <param name="diServices">依赖注入服务集合</param>
+    /// <param name="predicate">筛选条件</param>
+    /// <param name="call">遍历调用</param>
+    private static void ForEach(List<DiService> diServices, Func<Type, bool>? predicate, Action<DiService> call)
+    {
+        foreach (DiService service in diServices.Where(d => predicate is null || predicate(d.ServiceType)))
+        {
+            call(service);
+        }
+    }
+
+    /// <summary>
+    /// 添加服务
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="lifeCycle"></param>
+    /// <param name="interfaceType"></param>
+    private void AddService(Type type, DiLifeCycle? lifeCycle, Type? interfaceType = null)
+    {
+        if (lifeCycle == null)
+        {
+            return;
+        }
+
+        _ = lifeCycle.Value switch
+        {
+            DiLifeCycle.Scoped => interfaceType == null
+                ? _services.AddScoped(type)
+                : _services.AddScoped(interfaceType, type),
+            DiLifeCycle.Transient => interfaceType == null
+                ? _services.AddTransient(type)
+                : _services.AddTransient(interfaceType, type),
+            _ => interfaceType == null
+                ? _services.AddSingleton(type)
+                : _services.AddSingleton(interfaceType, type)
         };
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace TayveyTool.Models;
+﻿using TayveyTool.Enums;
+
+namespace TayveyTool.Models;
 
 /// <summary>
 /// 依赖注入服务
@@ -11,27 +13,12 @@ internal class DiService(Type serviceType)
     internal Type ServiceType { get; } = serviceType;
 
     /// <summary>
-    /// 强制不使用接口注册
+    /// 注册类型
     /// </summary>
-    internal bool Self { get; set; }
-
-    /// <summary>
-    /// 生命周期列表
-    /// </summary>
-    internal List<LifetimeEnum> Lifetimes { get; } = [];
-
-    /// <summary>
-    /// 注册接口列表
-    /// </summary>
-    internal List<Type> Interfaces { get; } = [];
+    internal DiRegisterMode? RegisterMode { get; set; }
 
     /// <summary>
     /// 生命周期
     /// </summary>
-    internal enum LifetimeEnum
-    {
-        Transient,
-        Scoped,
-        Singleton
-    }
+    internal DiLifeCycle? LifeCycle { get; set; }
 }

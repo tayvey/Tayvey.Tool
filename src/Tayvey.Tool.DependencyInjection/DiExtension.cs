@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-using TayveyTool.Attributes;
+using TayveyTool.Interfaces;
 
 namespace TayveyTool;
 
@@ -10,94 +10,91 @@ namespace TayveyTool;
 public static class DiExtension
 {
     /// <summary>
-    /// 添加依赖注入服务
+    /// 创建依赖注入构建器 (所有程序集中的类)
     /// </summary>
-    /// <param name="service"></param>
-    /// <exception cref="Exception"></exception>
-    public static void AddDiServices(this IServiceCollection service)
+    /// <param name="services">服务容器</param>
+    /// <returns></returns>
+    public static IDiBuilder CreateDi(this IServiceCollection services)
     {
-        IEnumerable<(Type t, List<BaseAttribute>)> serviceTuples = AppDomain.CurrentDomain
-            .GetAssemblies()
-            .SelectMany(a => a.GetTypes()
-                .Where(t => t is { IsClass: true, IsAbstract: false })
-                .Where(t => t.GetCustomAttributes<BaseAttribute>().Any())
-                .Select(t => (t, t.GetCustomAttributes<BaseAttribute>().ToList())));
-
-        foreach ((Type type, List<BaseAttribute> attributes) in serviceTuples)
-        {
-            if (attributes.Count > 1)
-            {
-                throw new($"依赖注入类 {type.FullName} 失败. 不明确的生命周期");
-            }
-
-            BaseAttribute attribute = attributes.Single();
-            if (attribute.Self)
-            {
-                service.AddSelf(type, attribute);
-                continue;
-            }
-
-            List<Type> interfaces = [.. type.GetInterfaces()];
-            List<Type> baseInterfaces = [.. type.BaseType?.GetInterfaces() ?? []];
-            List<Type> selfInterfaces = interfaces.Except(baseInterfaces).ToList();
-
-            if (selfInterfaces.Count == 0)
-            {
-                service.AddSelf(type, attribute);
-                continue;
-            }
-
-            if (attribute.Interfaces.Length == 0)
-            {
-                service.AddInterface(selfInterfaces[0], type, attribute);
-                continue;
-            }
-
-            List<Type> effectiveInterfaces = [.. selfInterfaces.Where(i => attribute.Interfaces.Contains(i))];
-            if (effectiveInterfaces.Count == 0)
-            {
-                service.AddInterface(selfInterfaces[0], type, attribute);
-                continue;
-            }
-
-            foreach (Type interfaceType in effectiveInterfaces)
-            {
-                service.AddInterface(interfaceType, type, attribute);
-            }
-        }
+        Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        return CreateDiBuilder(services, assemblies);
     }
 
     /// <summary>
-    /// 不使用接口注册
+    /// 创建依赖注入构建器 (指定类型所在程序集中的类)
     /// </summary>
-    /// <param name="service"></param>
-    /// <param name="type"></param>
-    /// <param name="attribute"></param>
-    private static void AddSelf(this IServiceCollection service, Type type, BaseAttribute attribute)
+    /// <param name="services">服务容器</param>
+    /// <typeparam name="TType">指定类型泛型</typeparam>
+    /// <returns></returns>
+    public static IDiBuilder CreateDi<TType>(this IServiceCollection services)
     {
-        _ = attribute switch
-        {
-            ScopedAttribute => service.AddScoped(type),
-            TransientAttribute => service.AddTransient(type),
-            _ => service.AddSingleton(type)
-        };
+        Assembly assembly = typeof(TType).Assembly;
+        return CreateDiBuilder(services, assembly);
     }
 
     /// <summary>
-    /// 使用接口注册
+    /// 创建依赖注入构建器 (指定类型所在程序集中的类)
     /// </summary>
-    /// <param name="service"></param>
-    /// <param name="interfaceType"></param>
-    /// <param name="type"></param>
-    /// <param name="attribute"></param>
-    private static void AddInterface(this IServiceCollection service, Type interfaceType, Type type,
-        BaseAttribute attribute)
+    /// <param name="services">服务容器</param>
+    /// <param name="types">指定类型集合</param>
+    /// <returns></returns>
+    public static IDiBuilder CreateDi(
+        this IServiceCollection services,
+        params Type[] types
+    )
     {
-        _ = attribute switch
-        {
-            ScopedAttribute => service.AddScoped(interfaceType, type),
-            TransientAttribute => service.AddTransient(interfaceType, type),
-            _ => service.AddSingleton(interfaceType, type)
-        };
+        IEnumerable<Assembly> assemblies = types.Select(t => t.Assembly);
+        return CreateDiBuilder(services, assemblies);
+    }
+
+    /// <summary>
+    /// 创建依赖注入构建器 (指定程序集中的类)
+    /// </summary>
+    /// <param name="services">服务容器</param>
+    /// <param name="assemblies">指定程序集集合</param>
+    /// <returns></returns>
+    public static IDiBuilder CreateDi(
+        this IServiceCollection services,
+        params Assembly[] assemblies
+    )
+    {
+        return CreateDiBuilder(services, assemblies);
+    }
+
+    /// <summary>
+    /// 创建依赖注入构建器
+    /// </summary>
+    /// <param name="services">服务容器</param>
+    /// <param name="assembly">指定程序集</param>
+    /// <returns></returns>
+    private static DiBuilder CreateDiBuilder(
+        this IServiceCollection services,
+        Assembly assembly
+    )
+    {
+        IEnumerable<Type> diTypes = assembly
+            .GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false });
+
+        return new(services, diTypes);
+    }
+
+    /// <summary>
+    /// 创建依赖注入构建器
+    /// </summary>
+    /// <param name="services">服务容器</param>
+    /// <param name="assemblies">指定程序集集合</param>
+    /// <returns></returns>
+    private static DiBuilder CreateDiBuilder(
+        this IServiceCollection services,
+        IEnumerable<Assembly> assemblies
+    )
+    {
+        IEnumerable<Type> diTypes = assemblies
+            .SelectMany(a => a
+                .GetTypes()
+                .Where(t => t is { IsClass: true, IsAbstract: false }));
+
+        return new(services, diTypes);
     }
 }

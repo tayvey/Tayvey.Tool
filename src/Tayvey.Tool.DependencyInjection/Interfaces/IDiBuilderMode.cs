@@ -1,17 +1,10 @@
 ﻿namespace TayveyTool.Interfaces;
 
 /// <summary>
-/// 依赖注入构建器
+/// 依赖注入构建器-模式
 /// </summary>
-public interface IDiBuilder
+public interface IDiBuilderMode
 {
-    /// <summary>
-    /// 筛选依赖注入服务类型集合
-    /// </summary>
-    /// <param name="predicate">筛选条件</param>
-    /// <returns></returns>
-    public IDiBuilder Where(Func<Type, bool> predicate);
-
     /// <summary>
     /// 不使用接口
     /// </summary>
@@ -32,4 +25,25 @@ public interface IDiBuilder
     /// <param name="predicate">筛选条件</param>
     /// <returns></returns>
     public IDiBuilderMode AllMode(Func<Type, bool>? predicate = null);
+
+    /// <summary>
+    /// 瞬时
+    /// </summary>
+    /// <param name="predicate">筛选条件</param>
+    /// <returns></returns>
+    public IDiBuilderLifeCycle Transient(Func<Type, bool>? predicate = null);
+
+    /// <summary>
+    /// 作用域
+    /// </summary>
+    /// <param name="predicate">筛选条件</param>
+    /// <returns></returns>
+    public IDiBuilderLifeCycle Scoped(Func<Type, bool>? predicate = null);
+
+    /// <summary>
+    /// 单例
+    /// </summary>
+    /// <param name="predicate">筛选条件</param>
+    /// <returns></returns>
+    public IDiBuilderLifeCycle Singleton(Func<Type, bool>? predicate = null);
 }
